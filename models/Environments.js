@@ -7,9 +7,9 @@ const EnvironmentSchema = new Schema({
     required: true
   },
   environment: {
-    PUT: [],
-    SIT: [],
-    ST: []
+    PUT: {},
+    SIT: {},
+    ST: {}
   }
 });
 

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
+var fs = require('fs');
 
 //Load Environment model
 const Environment = require("../../models/Environments");
@@ -15,44 +16,59 @@ router.get("/test", (req, res) => res.json({ msg: "Environment Works" }));
 // @access  Private
 
 router.post("/machine", (req, res) => {
-  // console.log(req.body);
   Environment.findOne({ release: req.body.release }).then(env => {
-    var envName = req.body.environment;
-    var machineName = req.body.machineName;
-    if (env) {
-      const newExp = {};
-      newExp[req.body.machineName] = {};
-      //Add to environments array
-      env.environment[envName].push({ [req.body.machineName]: { environmentName: envName } });
-
-      // console.log("env response", env);
-      console.log(env, "NEW ENV")
-      env.save().then(env => res.json(env));
-    } else {
-      const newRelease = new Environment({
-        release: req.body.release,
-        environmet: {
-          PUT: [],
-          SIT: [],
-          ST: []
+    const { release, environment, machineName } = req.body;
+    console.log(env);
+    fs.readFile('environments.json', 'utf8', function (err, envs) {
+      if (envs) {
+        envs = JSON.parse(envs);
+        if (envs[release]) {
+          let machineNames = envs[release][environment];
+          machineNames[machineName] = {};
+          newExp = {
+            [release]: {
+              [environment]: machineNames
+            }
+          }
+          let allEnvsList = Object.keys(envs);
+          let updatedEnvs = {};
+          allEnvsList.map(env => {
+            updatedEnvs[env] = envs[env];
+          });
+          fs.writeFile('environments.json', JSON.stringify(updatedEnvs), function (err) {
+            if (err) throw err;
+            console.log('UPDATED MACHINES!!!!!!!!!!!', envs);
+          });
         }
-      });
-      const newExp = {};
-      newExp[req.body.machineName] = {};
-      //Add to environments array
-      newRelease.environment[envName].push({ [req.body.machineName]: { environmentName: envName } });
-
-      console.log(newRelease, "NEW RELEASE");
-
-      // newRelease.environment[envName][machineName] = {};
-
-      // console.log(machineName, "fydghjkjhgfdfghjhgfghj");
-
-      newRelease
-        .save()
-        .then(env => res.json(env))
-        .catch(err => console.log(err));
-    }
+        else {
+          let allEnvsList = Object.keys(envs);
+          let updatedEnvs = {};
+          allEnvsList.map(env => {
+            updatedEnvs[env] = envs[env];
+          });
+          updatedEnvs[release] = {
+            [environment]: {
+              [machineName]: {}
+            }
+          }
+          fs.writeFile('environments.json', JSON.stringify(updatedEnvs), function (err) {
+            if (err) throw err;
+            console.log('CREATED RELEASE!!!!!!!!!!!!!', envs);
+          });
+        }
+      } else {
+        let updatedEnvs = {};
+        updatedEnvs[release] = {
+          [environment]: {
+            [machineName]: {}
+          }
+        }
+        fs.writeFile('environments.json', JSON.stringify(updatedEnvs), function (err) {
+          if (err) throw err;
+          console.log('CREATED FILE & RELEASE.....!!!!', updatedEnvs);
+        });
+      }
+    });
   });
 });
 
@@ -61,20 +77,28 @@ router.post("/machine", (req, res) => {
 // @access  Private
 
 router.delete("/machine/:mac_id", (req, res) => {
-  Environment.findOne({ env: req.env.id }).then(env => {
-    // Get remove index
-    const removeIndex = env.environment
-      .map(item => item.id)
-      .indexOf(req.params.exp_id);
-
-    //splice out of an array
-    env.environment.splice(removeIndex, 1);
-
-    //re-save the env
-    env
-      .save()
-      .then(env => res.json(env))
-      .catch(err => res.status(404).json(err));
+  fs.readFile('environments.json', 'utf8', function (err, data) {
+    if (data) {
+      let envs = JSON.parse(data);
+      console.log(req.body, Object.keys(envs))
+      const { release, environment, machineName } = req.body;
+      if (!envs[release]) {
+        console.log('release not found');
+      }
+      else if (!envs[release][environment]) {
+        console.log("machine not found");
+      }
+      else if (envs[release][environment][machineName]) {
+        delete envs[release][environment][machineName];
+        fs.writeFile('environments.json', JSON.stringify(envs), function (err) {
+          if (err) throw err;
+          console.log('DELETED.....!!!!', machineName);
+        });
+      }
+    }
+    else {
+      console.log('not found');
+    }
   });
 });
 

@@ -15,23 +15,18 @@ router.get("/test", (req, res) => res.json({ msg: "Environment Works" }));
 // @access  Private
 
 router.post("/machine", (req, res) => {
-  console.log(req.body);
+  // console.log(req.body);
   Environment.findOne({ release: req.body.release }).then(env => {
     var envName = req.body.environment;
     var machineName = req.body.machineName;
     if (env) {
       const newExp = {};
       newExp[req.body.machineName] = {};
-
-      console.log(newExp);
-
-      console.log(machineName, "machine name ++++++++++");
-
       //Add to environments array
-      env.environment[envName].push(newExp);
+      env.environment[envName].push({ [req.body.machineName]: { environmentName: envName } });
 
-      console.log("env response", env);
-
+      // console.log("env response", env);
+      console.log(env, "NEW ENV")
       env.save().then(env => res.json(env));
     } else {
       const newRelease = new Environment({
@@ -42,12 +37,16 @@ router.post("/machine", (req, res) => {
           ST: []
         }
       });
+      const newExp = {};
+      newExp[req.body.machineName] = {};
+      //Add to environments array
+      newRelease.environment[envName].push({ [req.body.machineName]: { environmentName: envName } });
 
-      console.log(newRelease, "called");
+      console.log(newRelease, "NEW RELEASE");
 
-      newRelease.environment[envName][machineName] = {};
+      // newRelease.environment[envName][machineName] = {};
 
-      console.log(machineName, "fydghjkjhgfdfghjhgfghj");
+      // console.log(machineName, "fydghjkjhgfdfghjhgfghj");
 
       newRelease
         .save()

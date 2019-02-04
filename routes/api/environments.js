@@ -33,7 +33,13 @@ router.post("/machine", (req, res) => {
           err
         ) {
           if (err) throw err;
-          console.log("UPDATED MACHINES!!!!!!!!!!!", envs);
+        });
+        fs.readFile("environments.json", "utf8", function(err, data) {
+          if (data) {
+            res.status(200).json(data);
+          } else {
+            res.status(404).json({message: "No data found"})
+          }
         });
       } else {
         let allEnvsList = Object.keys(envs);
@@ -50,7 +56,13 @@ router.post("/machine", (req, res) => {
           err
         ) {
           if (err) throw err;
-          console.log("CREATED RELEASE!!!!!!!!!!!!!", envs);
+        });
+        fs.readFile("environments.json", "utf8", function(err, data) {
+          if (data) {
+            res.status(200).json(data);
+          } else {
+            res.status(404).json({message: "No data found"})
+          }
         });
       }
     } else {
@@ -64,7 +76,13 @@ router.post("/machine", (req, res) => {
         err
       ) {
         if (err) throw err;
-        console.log("CREATED FILE & RELEASE.....!!!!", updatedEnvs);
+      });
+      fs.readFile("environments.json", "utf8", function(err, data) {
+        if (data) {
+          res.status(200).json(data);
+        } else {
+          res.status(404).json({message: "No data found"})
+        }
       });
     }
   });
@@ -81,18 +99,20 @@ router.delete("/machine/delete", (req, res) => {
       console.log(req.body, Object.keys(envs));
       const { release, environment, machineName } = req.body;
       if (!envs[release]) {
-        console.log("release not found");
       } else if (!envs[release][environment]) {
-        console.log("machine not found");
       } else if (envs[release][environment][machineName]) {
         delete envs[release][environment][machineName];
         fs.writeFile("environments.json", JSON.stringify(envs), function(err) {
           if (err) throw err;
-          console.log("DELETED.....!!!!", machineName);
+        });
+        fs.readFile("environments.json", "utf8", function(err, data) {
+          if (data) {
+            res.status(200).json(data);
+          } else {
+            res.status(404).json({message: "No data found"})
+          }
         });
       }
-    } else {
-      console.log("not found");
     }
   });
 });
@@ -101,6 +121,8 @@ router.get("/all-machines", (req, res) => {
   fs.readFile("environments.json", "utf8", function(err, data) {
     if (data) {
       res.status(200).json(data);
+    } else {
+      res.status(404).json({message: "No data found"})
     }
   });
 });

@@ -1,10 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const mongoose = require("mongoose");
-var fs = require('fs');
-
-//Load Environment model
-const Environment = require("../../models/Environments");
+var fs = require("fs");
 
 // @route   GET api/environment/test
 // @desc    Tests Environment route
@@ -16,59 +12,61 @@ router.get("/test", (req, res) => res.json({ msg: "Environment Works" }));
 // @access  Private
 
 router.post("/machine", (req, res) => {
-  Environment.findOne({ release: req.body.release }).then(env => {
-    const { release, environment, machineName } = req.body;
-    console.log(env);
-    fs.readFile('environments.json', 'utf8', function (err, envs) {
-      if (envs) {
-        envs = JSON.parse(envs);
-        if (envs[release]) {
-          let machineNames = envs[release][environment];
-          machineNames[machineName] = {};
-          newExp = {
-            [release]: {
-              [environment]: machineNames
-            }
+  fs.readFile("environments.json", "utf8", function(err, envs) {
+    if (envs) {
+      envs = JSON.parse(envs);
+      const { release, environment, machineName } = req.body;
+      if (envs[release]) {
+        let machineNames = envs[release][environment];
+        machineNames[machineName] = {};
+        newExp = {
+          [release]: {
+            [environment]: machineNames
           }
-          let allEnvsList = Object.keys(envs);
-          let updatedEnvs = {};
-          allEnvsList.map(env => {
-            updatedEnvs[env] = envs[env];
-          });
-          fs.writeFile('environments.json', JSON.stringify(updatedEnvs), function (err) {
-            if (err) throw err;
-            console.log('UPDATED MACHINES!!!!!!!!!!!', envs);
-          });
-        }
-        else {
-          let allEnvsList = Object.keys(envs);
-          let updatedEnvs = {};
-          allEnvsList.map(env => {
-            updatedEnvs[env] = envs[env];
-          });
-          updatedEnvs[release] = {
-            [environment]: {
-              [machineName]: {}
-            }
-          }
-          fs.writeFile('environments.json', JSON.stringify(updatedEnvs), function (err) {
-            if (err) throw err;
-            console.log('CREATED RELEASE!!!!!!!!!!!!!', envs);
-          });
-        }
-      } else {
+        };
+        let allEnvsList = Object.keys(envs);
         let updatedEnvs = {};
+        allEnvsList.map(env => {
+          updatedEnvs[env] = envs[env];
+        });
+        fs.writeFile("environments.json", JSON.stringify(updatedEnvs), function(
+          err
+        ) {
+          if (err) throw err;
+          console.log("UPDATED MACHINES!!!!!!!!!!!", envs);
+        });
+      } else {
+        let allEnvsList = Object.keys(envs);
+        let updatedEnvs = {};
+        allEnvsList.map(env => {
+          updatedEnvs[env] = envs[env];
+        });
         updatedEnvs[release] = {
           [environment]: {
             [machineName]: {}
           }
-        }
-        fs.writeFile('environments.json', JSON.stringify(updatedEnvs), function (err) {
+        };
+        fs.writeFile("environments.json", JSON.stringify(updatedEnvs), function(
+          err
+        ) {
           if (err) throw err;
-          console.log('CREATED FILE & RELEASE.....!!!!', updatedEnvs);
+          console.log("CREATED RELEASE!!!!!!!!!!!!!", envs);
         });
       }
-    });
+    } else {
+      let updatedEnvs = {};
+      updatedEnvs[release] = {
+        [environment]: {
+          [machineName]: {}
+        }
+      };
+      fs.writeFile("environments.json", JSON.stringify(updatedEnvs), function(
+        err
+      ) {
+        if (err) throw err;
+        console.log("CREATED FILE & RELEASE.....!!!!", updatedEnvs);
+      });
+    }
   });
 });
 
@@ -76,28 +74,33 @@ router.post("/machine", (req, res) => {
 // @desc    Delete machine from environment
 // @access  Private
 
-router.delete("/machine/:mac_id", (req, res) => {
-  fs.readFile('environments.json', 'utf8', function (err, data) {
+router.delete("/machine/delete", (req, res) => {
+  fs.readFile("environments.json", "utf8", function(err, data) {
     if (data) {
       let envs = JSON.parse(data);
-      console.log(req.body, Object.keys(envs))
+      console.log(req.body, Object.keys(envs));
       const { release, environment, machineName } = req.body;
       if (!envs[release]) {
-        console.log('release not found');
-      }
-      else if (!envs[release][environment]) {
+        console.log("release not found");
+      } else if (!envs[release][environment]) {
         console.log("machine not found");
-      }
-      else if (envs[release][environment][machineName]) {
+      } else if (envs[release][environment][machineName]) {
         delete envs[release][environment][machineName];
-        fs.writeFile('environments.json', JSON.stringify(envs), function (err) {
+        fs.writeFile("environments.json", JSON.stringify(envs), function(err) {
           if (err) throw err;
-          console.log('DELETED.....!!!!', machineName);
+          console.log("DELETED.....!!!!", machineName);
         });
       }
+    } else {
+      console.log("not found");
     }
-    else {
-      console.log('not found');
+  });
+});
+
+router.get("/all-machines", (req, res) => {
+  fs.readFile("environments.json", "utf8", function(err, data) {
+    if (data) {
+      res.status(200).json(data);
     }
   });
 });
